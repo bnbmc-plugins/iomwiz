@@ -6,5 +6,7 @@
   "iomwiz.wait.notready": "IOM is not ready. Using the /iom command may give more details.",
   "iomwiz.wait.unavailable": "IOM is not available on this server.",
   "iomwiz.ready.title": "IOM is ready",
-  "iomwiz.ready.message": "You can press the %s button on your keyboard to open IOM"
+  "iomwiz.ready.message": "You can press the %s button on your keyboard to open IOM",
+  "iomwiz.filepicker.title": "Upload an image to IOM",
+  "iomwiz.filepicker.accept": "Upload to IOM"
 }

@@ -1,9 +1,6 @@
 package com.vicr123.client.system
 
 import com.vicr123.client.system.linux.LinuxSystemIntegrationBackend
-import io.netty.util.concurrent.Promise
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 class SystemIntegration {
     companion object {
@@ -21,9 +18,9 @@ class SystemIntegration {
             return false;
         }
 
-        fun openFilePicker(): CompletableFuture<Array<String>> {
-            if (backend != null) return backend.openFilePicker();
-            return CompletableFuture.completedFuture(arrayOf())
+        suspend fun openFilePicker(): List<String> {
+            if (backend != null) return backend.openFilePicker()
+            return emptyList()
         }
     }
 }

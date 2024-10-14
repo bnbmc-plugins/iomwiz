@@ -17,6 +17,7 @@ import net.minecraft.client.util.InputUtil
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
+import org.lwjgl.glfw.GLFW
 
 class iomwizClient : ClientModInitializer {
     private lateinit var mapButton: KeyBinding
@@ -25,7 +26,7 @@ class iomwizClient : ClientModInitializer {
     private var iom: IOMClient? = null;
 
     override fun onInitializeClient() {
-        mapButton = KeyBindingHelper.registerKeyBinding(KeyBinding("iomwiz.open", InputUtil.Type.KEYSYM, 180 /* INTERNET EXPLORER button */, "iomwiz.key.category"))
+        mapButton = KeyBindingHelper.registerKeyBinding(KeyBinding("iomwiz.open", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_PAUSE, "iomwiz.key.category"))
 
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             if (mapButton.isPressed && !mapButtonPressed) {
