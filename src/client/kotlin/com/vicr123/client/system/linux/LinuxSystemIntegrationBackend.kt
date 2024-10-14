@@ -1,16 +1,15 @@
 package com.vicr123.client.system.linux
 
 import com.vicr123.client.system.SystemIntegrationBackend
+import com.vicr123.client.system.linux.portal.DBusFileChooserInterface
+import com.vicr123.client.system.linux.portal.DBusOpenURIInterface
+import com.vicr123.client.system.linux.portal.DBusRequestInterface
 import net.minecraft.text.Text
-import org.freedesktop.dbus.DBusPath
-import org.freedesktop.dbus.annotations.DBusInterfaceName
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
-import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.interfaces.DBusSigHandler
-import org.freedesktop.dbus.messages.DBusSignal
-import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
+import java.net.URL
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -19,15 +18,19 @@ private const val PORTAL_SERVICE = "org.freedesktop.portal.Desktop"
 class LinuxSystemIntegrationBackend : SystemIntegrationBackend {
     lateinit var sessionBus: DBusConnection
 
+    private fun initialseSessionBus() {
+        if (!this::sessionBus.isInitialized) {
+            sessionBus = DBusConnectionBuilder.forSessionBus().build()
+        }
+    }
+
     override fun canOpenFilePicker(): Boolean {
         return true;
     }
 
     override suspend fun openFilePicker(): List<String> {
         return suspendCoroutine { continuation ->
-            if (!this::sessionBus.isInitialized) {
-                sessionBus = DBusConnectionBuilder.forSessionBus().build()
-            }
+            initialseSessionBus()
             val fileChooser = sessionBus.getRemoteObject(PORTAL_SERVICE, "/org/freedesktop/portal/desktop", DBusFileChooserInterface::class.java)
 
             val handle = fileChooser.OpenFile("", Text.translatable("iomwiz.filepicker.title").string, mutableMapOf(
@@ -52,16 +55,21 @@ class LinuxSystemIntegrationBackend : SystemIntegrationBackend {
             })
         }
     }
-}
 
-@DBusInterfaceName("org.freedesktop.portal.FileChooser")
-public interface DBusFileChooserInterface : DBusInterface {
-    fun OpenFile(parentWindow: String, title: String, options: MutableMap<String, Variant<*>>): DBusPath;
-}
+    override fun canOpenUrl(): Boolean {
+        return true;
+    }
 
-@DBusInterfaceName("org.freedesktop.portal.Request")
-public interface DBusRequestInterface : DBusInterface {
-    fun Close()
-
-    class Response(path: String, val response: UInt32, val results: MutableMap<String, Variant<*>>) : DBusSignal(path, response, results)
+    override fun openUrl(url: URL) {
+        initialseSessionBus()
+        val openUrl = sessionBus.getRemoteObject(PORTAL_SERVICE, "/org/freedesktop/portal/desktop", DBusOpenURIInterface::class.java)
+        openUrl.OpenURI(
+            "",
+            url.toString(),
+            mutableMapOf(
+                "handle_token" to Variant("iomwiz"),
+                "ask" to Variant(true)
+            )
+        )
+    }
 }

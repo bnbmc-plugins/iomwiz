@@ -1,6 +1,7 @@
 package com.vicr123.client.system
 
 import com.vicr123.client.system.linux.LinuxSystemIntegrationBackend
+import java.net.URL
 
 class SystemIntegration {
     companion object {
@@ -8,7 +9,7 @@ class SystemIntegration {
 
         private fun currentSystemBackend(): LinuxSystemIntegrationBackend? {
             if (System.getProperty("os.name").lowercase() == "linux") {
-                return LinuxSystemIntegrationBackend();
+                return LinuxSystemIntegrationBackend()
             }
             return null
         }
@@ -21,6 +22,15 @@ class SystemIntegration {
         suspend fun openFilePicker(): List<String> {
             if (backend != null) return backend.openFilePicker()
             return emptyList()
+        }
+
+        fun canOpenUrl(): Boolean {
+            if (backend != null) return backend.canOpenUrl()
+            return false;
+        }
+
+        fun openUrl(url: URL) {
+            if (backend != null) return backend.openUrl(url)
         }
     }
 }

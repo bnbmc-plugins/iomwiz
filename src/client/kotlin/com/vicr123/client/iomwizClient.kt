@@ -126,7 +126,7 @@ class iomwizClient : ClientModInitializer {
         } else if (type == "ready") {
             if (message == "true") {
                 iom!!.ready = true
-                client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.ready.title"), Text.translatable("iomwiz.ready.message", "INTERNET EXPLORER")))
+                client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.ready.title"), Text.translatable("iomwiz.ready.message", mapButton.boundKeyLocalizedText)))
             } else if (message == "false") {
                 iom!!.ready = false
             }
