@@ -31,10 +31,9 @@ class IOMHttp {
                     wr.flush()
                 }
 
-//                println(responseCode)
-//                println(responseMessage)
                 if (responseCode in 200..299) {
                     if (clazz == InputStream::class.java) return@run inputStream as T
+                    if (clazz == Unit::class.java) return@run Unit as T
                     return@run gson.fromJson(inputStream.bufferedReader().readText(), clazz)
                 } else {
                     throw IOMHttpException(responseCode, inputStream.bufferedReader());

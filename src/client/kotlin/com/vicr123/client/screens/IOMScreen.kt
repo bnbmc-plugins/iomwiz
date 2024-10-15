@@ -21,10 +21,14 @@ private const val MAP_SPACING = 10
 
 @Environment(EnvType.CLIENT)
 class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMClient) : Screen(Text.literal("IOM")) {
-    private val chooseFileButton = ButtonWidget.builder(Text.literal("Choose a file"), ::chooseFile).build()
+    private val chooseFileButton = ButtonWidget.builder(Text.translatable("iomwiz.upload.text"), ::chooseFile).build()
     private val openInBrowserButton = ButtonWidget.builder(Text.translatable("iomwiz.browser.open"), ::openInBrowser).build()
     private lateinit var catgList: CatgList
     private val shownMapButtons: MutableList<MapWidget> = mutableListOf()
+
+    companion object {
+        var currentCategoryName = ""
+    }
 
     class CatgList(private val parentScreen: IOMScreen, minecraftClient: MinecraftClient?, i: Int, j: Int, k: Int) :
         AlwaysSelectedEntryListWidget<CatgEntry>(
@@ -47,15 +51,17 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         }
 
         fun updateCategories() {
+            val currentCategory = currentCategoryName
             while (entryCount > 0) {
                 this.remove(0)
             }
 
             for (category in parentScreen.iomClient.maps?.groupBy { it.category }?.keys ?: emptyList()) {
-                this.addEntry(CatgEntry(parentScreen, category))
-            }
-            if (entryCount > 0 && selectedOrNull == null) {
-                setSelected(getEntry(0))
+                val entry = CatgEntry(parentScreen, category)
+                this.addEntry(entry)
+                if (category == currentCategory && selectedOrNull == null) {
+                    setSelected(entry)
+                }
             }
         }
 
@@ -69,6 +75,7 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
 
         override fun setSelected(entry: CatgEntry?) {
             super.setSelected(entry)
+            currentCategoryName = entry?.category ?: ""
             parentScreen.updateShownMaps()
         }
     }
@@ -102,11 +109,11 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
     override fun init() {
         super.init()
 
-        chooseFileButton.setPosition(width / 2, height - 10)
+        chooseFileButton.setPosition(width / 2, height - 30)
         chooseFileButton.active = SystemIntegration.canOpenFilePicker()
         addDrawableChild(chooseFileButton)
 
-        openInBrowserButton.setPosition(10, height - 40)
+        openInBrowserButton.setPosition(10, height - 30)
         openInBrowserButton.active = SystemIntegration.canOpenUrl()
         addDrawableChild(openInBrowserButton)
 
@@ -115,10 +122,8 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         catgList.setDimensions(150, height - 80)
         catgList.active = true
         addDrawableChild(catgList)
-    }
 
-    override fun render(context: DrawContext?, mouseX: Int, mouseY: Int, delta: Float) {
-        super.render(context, mouseX, mouseY, delta)
+        updateShownMaps()
     }
 
     fun updateShownMaps() {
@@ -168,6 +173,11 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         }.thenAccept { urls ->
             println(urls)
         }
+    }
+
+    override fun removed() {
+        // TODO: Cancel any running coroutines
+        super.removed()
     }
 
     fun openInBrowser(button: ButtonWidget) {

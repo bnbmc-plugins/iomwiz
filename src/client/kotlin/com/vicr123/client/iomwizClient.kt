@@ -125,13 +125,18 @@ class iomwizClient : ClientModInitializer {
             showIomScreenIfWaiting(client)
         } else if (type == "ready") {
             if (message == "true") {
+                // Only show the toast if we weren't ready before
+                if (iom!!.ready == false) {
+                    client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.ready.title"), Text.translatable("iomwiz.ready.message", mapButton.boundKeyLocalizedText)))
+                }
                 iom!!.ready = true
-                client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.ready.title"), Text.translatable("iomwiz.ready.message", mapButton.boundKeyLocalizedText)))
             } else if (message == "false") {
                 iom!!.ready = false
             }
             println("Ready: ${iom!!.ready}")
             showIomScreenIfWaiting(client)
+        } else if (type == "mapsUpdated") {
+            iom?.updateMaps()
         }
     }
 

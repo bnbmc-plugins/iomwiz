@@ -4,6 +4,7 @@ import com.vicr123.client.system.SystemIntegrationBackend
 import com.vicr123.client.system.linux.portal.DBusFileChooserInterface
 import com.vicr123.client.system.linux.portal.DBusOpenURIInterface
 import com.vicr123.client.system.linux.portal.DBusRequestInterface
+import kotlinx.coroutines.suspendCancellableCoroutine
 import net.minecraft.text.Text
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
@@ -11,7 +12,6 @@ import org.freedesktop.dbus.interfaces.DBusSigHandler
 import org.freedesktop.dbus.types.Variant
 import java.net.URL
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 private const val PORTAL_SERVICE = "org.freedesktop.portal.Desktop"
 
@@ -29,7 +29,7 @@ class LinuxSystemIntegrationBackend : SystemIntegrationBackend {
     }
 
     override suspend fun openFilePicker(): List<String> {
-        return suspendCoroutine { continuation ->
+        return suspendCancellableCoroutine { continuation ->
             initialseSessionBus()
             val fileChooser = sessionBus.getRemoteObject(PORTAL_SERVICE, "/org/freedesktop/portal/desktop", DBusFileChooserInterface::class.java)
 
@@ -53,6 +53,9 @@ class LinuxSystemIntegrationBackend : SystemIntegrationBackend {
                     continuation.resume(uris);
                 }
             })
+            continuation.invokeOnCancellation {
+                request.Close()
+            }
         }
     }
 

@@ -33,6 +33,10 @@ class IOMClient(private val client: MinecraftClient) {
         http.get(URL("${serverRoot}maps"), Array<IOMMap>::class.java).thenAccept { maps -> this.maps = maps}
     }
 
+    fun giveMap(map: IOMMap) {
+        http.get(URL("${serverRoot}maps/${map.id}/give"), Unit::class.java)
+    }
+
     fun imageTexture(resource: String): DownloadedImage? {
         if (images.containsKey(resource)) {
             return images[resource]
