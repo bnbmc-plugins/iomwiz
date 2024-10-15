@@ -11,5 +11,13 @@
   "iomwiz.filepicker.accept": "Upload to IOM",
   "iomwiz.browser.open": "Open IOM in browser",
   "iomwiz.category.uncategorised": "Uncategorised",
-  "iomwiz.upload.text": "Upload an image"
+  "iomwiz.upload.text": "Upload an image",
+  "iomwiz.noncanon.title": "Non-canon image size",
+  "iomwiz.noncanon.message": "You are uploading one or more images with a non-canon size. For best results, upload images with dimensions in multiples of 128x128.",
+  "iomwiz.noncanon.yes": "Upload Anyway",
+  "iomwiz.noncanon.no": "Go Back",
+  "iomwiz.uploadsuccess.title": "Upload Complete",
+  "iomwiz.uploadsuccess.message": "Uploaded %s",
+  "iomwiz.uploadfail.title": "Upload Failed",
+  "iomwiz.uploadfail.message": "Could not upload %s"
 }

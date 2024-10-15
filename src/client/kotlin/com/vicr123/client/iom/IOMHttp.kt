@@ -2,7 +2,6 @@ package com.vicr123.client.iom
 
 import com.google.gson.Gson
 import java.io.InputStream
-import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.CompletableFuture
@@ -26,9 +25,11 @@ class IOMHttp {
                 setRequestProperty("Authorization", "Bearer $authToken")
 
                 if (payload != null) {
-                    val wr = OutputStreamWriter(outputStream)
-                    wr.write(payload)
-                    wr.flush()
+                    val payloadBytes = payload.toByteArray()
+                    setRequestProperty("Content-Type", "application/json")
+                    setFixedLengthStreamingMode(payloadBytes.size)
+                    doOutput = true
+                    outputStream.write(payloadBytes)
                 }
 
                 if (responseCode in 200..299) {

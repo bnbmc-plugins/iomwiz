@@ -9,11 +9,15 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.screen.ConfirmScreen
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.widget.AlwaysSelectedEntryListWidget
 import net.minecraft.client.gui.widget.ButtonWidget
+import net.minecraft.client.texture.NativeImage
 import net.minecraft.text.Text
+import java.net.URI
 import java.net.URL
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
 private const val MAP_SIZE = 80
@@ -166,12 +170,38 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
     }
 
     fun chooseFile(button: ButtonWidget) {
+        var uploadCategory = catgList.selectedOrNull?.category ?: ""
         CompletableFuture.supplyAsync {
             runBlocking {
                 return@runBlocking SystemIntegration.openFilePicker()
             }
         }.thenAccept { urls ->
-            println(urls)
+            client?.send {
+                val nonCannonUrls = mutableSetOf<String>()
+                for (url in urls) {
+                    val nativeImage = Path.of(URI(url)).toFile().inputStream().use {
+                        return@use NativeImage.read(it);
+                    }
+                    if (nativeImage.height % 128 != 0 || nativeImage.width % 128 != 0) {
+                        nonCannonUrls.add(url)
+                    }
+                }
+
+                if (nonCannonUrls.isNotEmpty()) {
+                    client?.setScreen(ConfirmScreen({ ok ->
+                        client?.setScreen(this)
+
+                        for (url in urls) {
+                            iomClient.uploadMap(Path.of(URI(url)).toFile(), uploadCategory)
+                        }
+                    }, Text.translatable("iomwiz.noncanon.title"), Text.translatable("iomwiz.noncanon.message"), Text.translatable("iomwiz.noncanon.yes"), Text.translatable("iomwiz.noncanon.no")))
+                    return@send
+                }
+
+                for (url in urls) {
+                    iomClient.uploadMap(Path.of(URI(url)).toFile(), uploadCategory)
+                }
+            }
         }
     }
 

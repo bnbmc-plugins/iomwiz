@@ -1,6 +1,7 @@
 package com.vicr123.client.system
 
 import com.vicr123.client.system.linux.LinuxSystemIntegrationBackend
+import net.minecraft.util.Util
 import java.net.URL
 
 class SystemIntegration {
@@ -26,11 +27,12 @@ class SystemIntegration {
 
         fun canOpenUrl(): Boolean {
             if (backend != null) return backend.canOpenUrl()
-            return false;
+            return true;
         }
 
         fun openUrl(url: URL) {
             if (backend != null) return backend.openUrl(url)
+            Util.getOperatingSystem().open(url)
         }
     }
 }
