@@ -79,11 +79,11 @@ class iomwizClient : ClientModInitializer {
             client.setScreen(IOMWaitScreen(Text.translatable("iomwiz.wait.load")))
         }
 
-        client.setScreen(IOMScreen(iom!!))
+        client.setScreen(IOMScreen(client, iom!!))
     }
 
-    fun handleInit(client: MinecraftClient) {
-        iom = IOMClient();
+    private fun handleInit(client: MinecraftClient) {
+        iom = IOMClient(client)
         iom!!.mapsChangedListeners.add(object : MapsChangedListener {
             override fun onMapsChanged() {
                 showIomScreenIfWaiting(client)

@@ -1,6 +1,7 @@
 package com.vicr123.client.iom
 
 import com.google.gson.Gson
+import java.io.InputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -33,6 +34,7 @@ class IOMHttp {
 //                println(responseCode)
 //                println(responseMessage)
                 if (responseCode in 200..299) {
+                    if (clazz == InputStream::class.java) return@run inputStream as T
                     return@run gson.fromJson(inputStream.bufferedReader().readText(), clazz)
                 } else {
                     throw IOMHttpException(responseCode, inputStream.bufferedReader());

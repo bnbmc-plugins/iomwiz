@@ -9,5 +9,6 @@
   "iomwiz.ready.message": "You can press the %s button on your keyboard to open IOM",
   "iomwiz.filepicker.title": "Upload an image to IOM",
   "iomwiz.filepicker.accept": "Upload to IOM",
-  "iomwiz.browser.open": "Open IOM in browser"
+  "iomwiz.browser.open": "Open IOM in browser",
+  "iomwiz.category.uncategorised": "Uncategorised"
 }
