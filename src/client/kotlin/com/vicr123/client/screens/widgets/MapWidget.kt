@@ -54,6 +54,8 @@ class MapWidget(x: Int, y: Int, width: Int, height: Int, private val map: IOMMap
 
     }
 
+
+
     override fun onPress() {
         client.giveMap(map)
         MinecraftClient.getInstance().setScreen(null)

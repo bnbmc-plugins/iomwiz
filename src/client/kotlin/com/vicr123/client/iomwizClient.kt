@@ -20,11 +20,15 @@ import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import org.lwjgl.glfw.GLFW
 
+const val TICKS_PER_HOUR: Int = 20 * 60 * 60
+
 class iomwizClient : ClientModInitializer {
     private lateinit var mapButton: KeyBinding
     private var mapButtonPressed = false;
 
     private var iom: IOMClient? = null;
+    private var tickCounter = 0;
+    private var isConnected = false;
 
     override fun onInitializeClient() {
         mapButton = KeyBindingHelper.registerKeyBinding(KeyBinding("iomwiz.open", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_PAUSE, "iomwiz.key.category"))
@@ -42,11 +46,27 @@ class iomwizClient : ClientModInitializer {
             }
         }
         ClientPlayConnectionEvents.INIT.register { clientPlayNetworkHandler, minecraftClient ->
+            tickCounter = 0
             handleInit(minecraftClient)
+            isConnected = true;
         }
         ClientPlayConnectionEvents.JOIN.register { clientPlayNetworkHandler, packetSender, minecraftClient ->
             handleJoin()
         }
+        ClientPlayConnectionEvents.DISCONNECT.register { clientPlayNetworkHandler, minecraftClient ->
+            isConnected = false
+        }
+        ClientTickEvents.END_CLIENT_TICK.register { minecraftClient ->
+            if (!isConnected) return@register
+
+            tickCounter++
+            // Update the token every hour
+            if (tickCounter >= TICKS_PER_HOUR) {
+                tickCounter = 0
+                updateToken()
+            }
+        }
+
     }
 
     fun showIomScreenIfWaiting(client: MinecraftClient) {
