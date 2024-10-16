@@ -27,8 +27,18 @@ private const val MAP_SPACING = 10
 class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMClient) : Screen(Text.literal("IOM")) {
     private val chooseFileButton = ButtonWidget.builder(Text.translatable("iomwiz.upload.text"), ::chooseFile).build()
     private val openInBrowserButton = ButtonWidget.builder(Text.translatable("iomwiz.browser.open"), ::openInBrowser).build()
+    private val previousPageButton = ButtonWidget.builder(Text.literal("<"), ::previousPage).build()
+    private val nextPageButton = ButtonWidget.builder(Text.literal(">"), ::nextPage).build()
     private lateinit var catgList: CatgList
     private val shownMapButtons: MutableList<MapWidget> = mutableListOf()
+    private var pageNumber = 0
+    private var totalPages = 0
+
+    val mapsChangedListener = object : MapsChangedListener {
+        override fun onMapsChanged() {
+            updatePage()
+        }
+    }
 
     companion object {
         var currentCategoryName = ""
@@ -80,6 +90,8 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         override fun setSelected(entry: CatgEntry?) {
             super.setSelected(entry)
             currentCategoryName = entry?.category ?: ""
+            parentScreen.pageNumber = 0
+            parentScreen.updatePage()
             parentScreen.updateShownMaps()
         }
     }
@@ -121,13 +133,24 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         openInBrowserButton.active = SystemIntegration.canOpenUrl()
         addDrawableChild(openInBrowserButton)
 
+        previousPageButton.setPosition(170, height - 30)
+        previousPageButton.setDimensions(20, 20)
+        addDrawableChild(previousPageButton)
+
+        nextPageButton.setPosition(250, height - 30)
+        nextPageButton.setDimensions(20, 20)
+        addDrawableChild(nextPageButton)
+
         catgList = CatgList(this, client, 100, height - 80, 10)
         catgList.setPosition(10, 10)
         catgList.setDimensions(150, height - 80)
         catgList.active = true
         addDrawableChild(catgList)
 
+        iomClient.mapsChangedListeners.add(mapsChangedListener)
+
         updateShownMaps()
+        updatePage()
     }
 
     fun updateShownMaps() {
@@ -150,7 +173,7 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         val validMaps = iomClient.maps?.groupBy { it.category }?.get(catgList.selectedOrNull!!.category)
         if (validMaps == null) return;
 
-        val firstItem = 0;
+        val firstItem = pageSize() * pageNumber;
         var currentOffset = 0;
         while (firstItem + currentOffset < validMaps.size && currentOffset < mapsHorizontally * mapsVertically) {
             val thisX = firstX + (currentOffset % mapsHorizontally) * (MAP_SIZE + MAP_SPACING)
@@ -164,50 +187,106 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         }
     }
 
+    fun pageSize(): Int {
+        val firstX = 170
+        val maxX = width - 10
+        val firstY = 10
+        val maxY = height - 40
+
+        val mapsHorizontally = (maxX - firstX) / (MAP_SIZE + MAP_SPACING)
+        val mapsVertically = (maxY - firstY) / (MAP_SIZE + MAP_SPACING)
+
+        return mapsHorizontally * mapsVertically
+    }
+
+    override fun render(context: DrawContext?, mouseX: Int, mouseY: Int, delta: Float) {
+        super.render(context, mouseX, mouseY, delta)
+        context?.drawCenteredTextWithShadow(client!!.textRenderer, Text.literal("${pageNumber + 1} / $totalPages"), 220, height - 25, 0xffffff)
+    }
+
     override fun resize(client: MinecraftClient?, width: Int, height: Int) {
         super.resize(client, width, height)
+        updatePage()
         updateShownMaps()
     }
 
     fun chooseFile(button: ButtonWidget) {
-        var uploadCategory = catgList.selectedOrNull?.category ?: ""
+        val uploadCategory = catgList.selectedOrNull?.category ?: ""
         CompletableFuture.supplyAsync {
             runBlocking {
                 return@runBlocking SystemIntegration.openFilePicker()
             }
         }.thenAccept { urls ->
             client?.send {
-                val nonCannonUrls = mutableSetOf<String>()
-                for (url in urls) {
-                    val nativeImage = Path.of(URI(url)).toFile().inputStream().use {
-                        return@use NativeImage.read(it);
-                    }
-                    if (nativeImage.height % 128 != 0 || nativeImage.width % 128 != 0) {
-                        nonCannonUrls.add(url)
-                    }
-                }
+                processUpload(urls.map { Path.of(URI(it)) }, uploadCategory)
+            }
+        }
+    }
 
-                if (nonCannonUrls.isNotEmpty()) {
-                    client?.setScreen(ConfirmScreen({ ok ->
-                        client?.setScreen(this)
-
-                        for (url in urls) {
-                            iomClient.uploadMap(Path.of(URI(url)).toFile(), uploadCategory)
-                        }
-                    }, Text.translatable("iomwiz.noncanon.title"), Text.translatable("iomwiz.noncanon.message"), Text.translatable("iomwiz.noncanon.yes"), Text.translatable("iomwiz.noncanon.no")))
-                    return@send
-                }
-
-                for (url in urls) {
-                    iomClient.uploadMap(Path.of(URI(url)).toFile(), uploadCategory)
+    fun processUpload(paths: List<Path>, uploadCategory: String) {
+        val nonCanonPaths = mutableSetOf<Path>()
+        for (path in paths) {
+            val nativeImage = path.toFile().inputStream().use {
+                try {
+                    return@use NativeImage.read(it);
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return@use null;
                 }
             }
+            if (nativeImage != null && (nativeImage.height % 128 != 0 || nativeImage.width % 128 != 0)) {
+                nonCanonPaths.add(path)
+            }
+        }
+
+        if (nonCanonPaths.isNotEmpty()) {
+            client?.setScreen(ConfirmScreen({ ok ->
+                client?.setScreen(this)
+
+                for (path in paths) {
+                    iomClient.uploadMap(path.toFile(), uploadCategory)
+                }
+            }, Text.translatable("iomwiz.noncanon.title"), Text.translatable("iomwiz.noncanon.message"), Text.translatable("iomwiz.noncanon.yes"), Text.translatable("iomwiz.noncanon.no")))
+            return
+        }
+
+        for (path in paths) {
+            iomClient.uploadMap(path.toFile(), uploadCategory)
         }
     }
 
     override fun removed() {
         // TODO: Cancel any running coroutines
+        iomClient.mapsChangedListeners.remove(mapsChangedListener)
         super.removed()
+    }
+
+    fun previousPage(button: ButtonWidget) {
+        pageNumber--
+        updatePage()
+    }
+
+    fun nextPage(button: ButtonWidget) {
+        pageNumber++
+        updatePage()
+    }
+
+    fun updatePage() {
+        if (!this::catgList.isInitialized) return
+
+        val validMaps = if (catgList.selectedOrNull == null) null else iomClient.maps?.groupBy { it.category }?.get(catgList.selectedOrNull!!.category)
+        previousPageButton.active = pageNumber > 0
+        nextPageButton.active = validMaps != null && (pageNumber + 1) * pageSize() < validMaps.size
+        totalPages = (validMaps?.size ?: 1) / pageSize() + 1
+
+        updateShownMaps()
+    }
+
+    override fun filesDragged(paths: MutableList<Path>?) {
+        super.filesDragged(paths)
+        if (paths != null) {
+            processUpload(paths, catgList.selectedOrNull?.category ?: "")
+        }
     }
 
     fun openInBrowser(button: ButtonWidget) {

@@ -12,3 +12,4 @@ public interface DBusRequestInterface : DBusInterface {
 
     class Response(path: String, val response: UInt32, val results: MutableMap<String, Variant<*>>) : DBusSignal(path, response, results)
 }
+

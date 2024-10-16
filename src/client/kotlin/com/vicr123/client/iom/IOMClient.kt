@@ -50,12 +50,17 @@ class IOMClient(private val client: MinecraftClient) {
 
         images[resource] = null
         http.get(URL("${serverRoot}images/${resource}"), InputStream::class.java).thenAccept { stream ->
-            val nativeImage = NativeImage.read(stream)
-            val texture = NativeImageBackedTexture(nativeImage)
-            val identifier = Identifier("iomwiz", "maps/$resource")
-            texture.bindTexture()
-            client.textureManager.registerTexture(identifier, texture)
-            images[resource] = DownloadedImage(identifier, nativeImage.width, nativeImage.height)
+            try {
+                val nativeImage = NativeImage.read(stream)
+                val texture = NativeImageBackedTexture(nativeImage)
+                val identifier = Identifier("iomwiz", "maps/$resource")
+                texture.bindTexture()
+                client.textureManager.registerTexture(identifier, texture)
+                images[resource] = DownloadedImage(identifier, nativeImage.width, nativeImage.height)
+            } catch (e: Exception) {
+                // Give up on this image
+                e.printStackTrace()
+            }
         }
 
         return null

@@ -1,14 +1,13 @@
 package com.vicr123.client.system.linux
 
 import com.vicr123.client.system.SystemIntegrationBackend
-import com.vicr123.client.system.linux.portal.DBusFileChooserInterface
-import com.vicr123.client.system.linux.portal.DBusOpenURIInterface
-import com.vicr123.client.system.linux.portal.DBusRequestInterface
+import com.vicr123.client.system.linux.portal.*
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.minecraft.text.Text
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
 import org.freedesktop.dbus.interfaces.DBusSigHandler
+import org.freedesktop.dbus.types.UInt32
 import org.freedesktop.dbus.types.Variant
 import java.net.URL
 import kotlin.coroutines.resume
@@ -36,7 +35,21 @@ class LinuxSystemIntegrationBackend : SystemIntegrationBackend {
             val handle = fileChooser.OpenFile("", Text.translatable("iomwiz.filepicker.title").string, mutableMapOf(
                 "handle_token" to Variant("iomwiz"),
                 "multiple" to Variant(true),
-                "accept_label" to Variant(Text.translatable("iomwiz.filepicker.accept").string)
+                "accept_label" to Variant(Text.translatable("iomwiz.filepicker.accept").string),
+                "filters" to Variant(mutableListOf(
+                    DBusFileChooserFilter("PNG files", mutableListOf(
+                        DBusFileChooserFilterItem(UInt32(1), "image/png")
+                    )),
+                    DBusFileChooserFilter("GIF files", mutableListOf(
+                        DBusFileChooserFilterItem(UInt32(1), "image/gif")
+                    )),
+                    DBusFileChooserFilter("WebP files", mutableListOf(
+                        DBusFileChooserFilterItem(UInt32(1), "image/webp")
+                    )),
+                    DBusFileChooserFilter("JPEG files", mutableListOf(
+                        DBusFileChooserFilterItem(UInt32(1), "image/jpeg")
+                    ))
+                ), "a(sa(us))")
             ))
             val request = sessionBus.getRemoteObject(PORTAL_SERVICE, handle.path, DBusRequestInterface::class.java)
             sessionBus.addSigHandler(DBusRequestInterface.Response::class.java, request, object : DBusSigHandler<DBusRequestInterface.Response> {
