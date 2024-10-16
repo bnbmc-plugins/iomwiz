@@ -1,6 +1,7 @@
 package com.vicr123.client
 
 import com.vicr123.client.iom.IOMClient
+import com.vicr123.client.iom.IOMReadyState
 import com.vicr123.client.iom.MapsChangedListener
 import com.vicr123.client.screens.IOMScreen
 import com.vicr123.client.screens.IOMWaitScreen
@@ -59,11 +60,11 @@ class iomwizClient : ClientModInitializer {
             return;
         }
 
-        if (iom!!.ready == null) {
+        if (iom!!.ready == IOMReadyState.Unavailable) {
             // IOM is not available
             client.setScreen(IOMWaitScreen(Text.translatable("iomwiz.wait.unavailable")))
             return
-        } else if (iom!!.ready == false) {
+        } else if (iom!!.ready == IOMReadyState.NotReady) {
             client.setScreen(IOMWaitScreen(Text.translatable("iomwiz.wait.notready")))
             return
         }
@@ -126,12 +127,12 @@ class iomwizClient : ClientModInitializer {
         } else if (type == "ready") {
             if (message == "true") {
                 // Only show the toast if we weren't ready before
-                if (iom!!.ready == false) {
+                if (iom!!.ready == IOMReadyState.NotReady) {
                     client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.ready.title"), Text.translatable("iomwiz.ready.message", mapButton.boundKeyLocalizedText)))
                 }
-                iom!!.ready = true
+                iom!!.ready = IOMReadyState.Ready
             } else if (message == "false") {
-                iom!!.ready = false
+                iom!!.ready = IOMReadyState.NotReady
             }
             println("Ready: ${iom!!.ready}")
             showIomScreenIfWaiting(client)
@@ -147,7 +148,7 @@ class iomwizClient : ClientModInitializer {
     }
 
     fun updateReady() {
-        if (iom!!.ready != true) {
+        if (iom!!.ready != IOMReadyState.Ready) {
             sendMessage("ready")
         }
     }

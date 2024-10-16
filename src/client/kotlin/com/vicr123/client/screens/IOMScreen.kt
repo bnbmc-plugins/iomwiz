@@ -242,6 +242,7 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
         if (nonCanonPaths.isNotEmpty()) {
             client?.setScreen(ConfirmScreen({ ok ->
                 client?.setScreen(this)
+                if (!ok) return@ConfirmScreen;
 
                 for (path in paths) {
                     iomClient.uploadMap(path.toFile(), uploadCategory)
@@ -284,6 +285,12 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
 
     override fun filesDragged(paths: MutableList<Path>?) {
         super.filesDragged(paths)
+        for (map in shownMapButtons) {
+            if (map.isHovered) {
+                return
+            }
+        }
+
         if (paths != null) {
             processUpload(paths, catgList.selectedOrNull?.category ?: "")
         }

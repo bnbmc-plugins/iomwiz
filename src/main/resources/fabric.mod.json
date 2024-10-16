@@ -4,9 +4,16 @@
   "version": "${version}",
   "name": "IOMWiz",
   "description": "",
-  "authors": [],
+  "authors": [
+    {
+      "name": "Victor Tran",
+      "contact": {
+        "email": "vicr12345@gmail.com"
+      }
+    }
+  ],
   "contact": {},
-  "license": "All-Rights-Reserved",
+  "license": "MIT",
   "icon": "assets/iomwiz/icon.png",
   "environment": "client",
   "entrypoints": {

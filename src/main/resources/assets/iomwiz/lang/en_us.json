@@ -4,7 +4,7 @@
   "iomwiz.wait.server": "Waiting for the server...",
   "iomwiz.wait.load": "Loading maps...",
   "iomwiz.wait.notready": "IOM is not ready. Using the /iom command may give more details.",
-  "iomwiz.wait.unavailable": "IOM is not available on this server.",
+  "iomwiz.wait.unavailable": "IOM is not available on this server, or is not responding. If you are sure IOM is on this server, please wait a few moments.",
   "iomwiz.ready.title": "IOM is ready",
   "iomwiz.ready.message": "You can press the %s button on your keyboard to open IOM",
   "iomwiz.filepicker.title": "Upload an image to IOM",
