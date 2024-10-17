@@ -19,5 +19,7 @@
   "iomwiz.uploadsuccess.title": "Upload Complete",
   "iomwiz.uploadsuccess.message": "Uploaded %s",
   "iomwiz.uploadfail.title": "Upload Failed",
-  "iomwiz.uploadfail.message": "Could not upload %s"
+  "iomwiz.uploadfail.message": "Could not upload %s",
+  "iomwiz.replace.title": "Replace Mapsign?",
+  "iomwiz.replace.message": "Replace the mapsign \"%s\" with the file that you just dropped?"
 }

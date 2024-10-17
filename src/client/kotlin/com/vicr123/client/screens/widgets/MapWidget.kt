@@ -9,7 +9,7 @@ import net.minecraft.client.gui.widget.PressableWidget
 import net.minecraft.text.Text
 
 
-class MapWidget(x: Int, y: Int, width: Int, height: Int, private val map: IOMMap, private val client: IOMClient) :
+class MapWidget(x: Int, y: Int, width: Int, height: Int, val map: IOMMap, private val client: IOMClient) :
     PressableWidget(x, y, width, height, Text.literal("")) {
 
     override fun renderWidget(context: DrawContext?, mouseX: Int, mouseY: Int, delta: Float) {

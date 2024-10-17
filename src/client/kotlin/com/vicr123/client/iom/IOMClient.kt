@@ -92,6 +92,29 @@ class IOMClient(private val client: MinecraftClient) {
             }
         }
     }
+
+    fun replaceMap(map: IOMMap, mapFile: File) {
+        mapFile.inputStream().use { stream ->
+            val gson = Gson()
+
+            val payload = JsonObject()
+            payload.addProperty("image", Base64.getEncoder().encodeToString(stream.readAllBytes()))
+
+            http.put(URL("${serverRoot}maps/${map.id}"), gson.toJson(payload), Unit::class.java).thenAccept({
+                client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.uploadsuccess.title"), Text.translatable("iomwiz.uploadsuccess.message", mapFile.nameWithoutExtension)))
+            }).exceptionally { e ->
+                e.printStackTrace()
+
+                if (e is IOMHttpException) {
+                    println("IOM server responded with ${e.responseCode}")
+                    println(e.bufferedReader.readText())
+                }
+
+                client.toastManager.add(SystemToast(SystemToast.Type.PERIODIC_NOTIFICATION, Text.translatable("iomwiz.uploadfail.title"), Text.translatable("iomwiz.uploadfail.message", mapFile.nameWithoutExtension)))
+                null
+            }
+        }
+    }
 }
 
 class DownloadedImage(public val identifier: Identifier, public val width: Int, public val height: Int)

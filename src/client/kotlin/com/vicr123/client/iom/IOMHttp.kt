@@ -18,6 +18,10 @@ class IOMHttp {
         return http("POST", url, payload, clazz);
     }
 
+    fun <T> put(url: URL, payload: String, clazz: Class<T>): CompletableFuture<T> {
+        return http("PUT", url, payload, clazz);
+    }
+
     private fun <T> http(verb: String, url: URL, payload: String?, clazz: Class<T>): CompletableFuture<T> {
         return CompletableFuture.supplyAsync {
             return@supplyAsync (url.openConnection() as HttpURLConnection).run {

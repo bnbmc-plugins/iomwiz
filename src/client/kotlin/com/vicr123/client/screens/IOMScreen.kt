@@ -154,36 +154,38 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
     }
 
     fun updateShownMaps() {
-        for (button in shownMapButtons) {
-            remove(button)
-        }
-        shownMapButtons.clear()
+        client?.send {
+            for (button in shownMapButtons) {
+                remove(button)
+            }
+            shownMapButtons.clear()
 
-        if (!this::catgList.isInitialized) return
-        if (catgList.selectedOrNull == null) return
+            if (!this::catgList.isInitialized) return@send
+            if (catgList.selectedOrNull == null) return@send
 
-        val firstX = 170
-        val maxX = width - 10
-        val firstY = 10
-        val maxY = height - 40
+            val firstX = 170
+            val maxX = width - 10
+            val firstY = 10
+            val maxY = height - 40
 
-        val mapsHorizontally = (maxX - firstX) / (MAP_SIZE + MAP_SPACING)
-        val mapsVertically = (maxY - firstY) / (MAP_SIZE + MAP_SPACING)
+            val mapsHorizontally = (maxX - firstX) / (MAP_SIZE + MAP_SPACING)
+            val mapsVertically = (maxY - firstY) / (MAP_SIZE + MAP_SPACING)
 
-        val validMaps = iomClient.maps?.groupBy { it.category }?.get(catgList.selectedOrNull!!.category)
-        if (validMaps == null) return;
+            val validMaps = iomClient.maps?.groupBy { it.category }?.get(catgList.selectedOrNull!!.category)
+            if (validMaps == null) return@send;
 
-        val firstItem = pageSize() * pageNumber;
-        var currentOffset = 0;
-        while (firstItem + currentOffset < validMaps.size && currentOffset < mapsHorizontally * mapsVertically) {
-            val thisX = firstX + (currentOffset % mapsHorizontally) * (MAP_SIZE + MAP_SPACING)
-            val thisY = firstY + (currentOffset / mapsHorizontally) * (MAP_SIZE + MAP_SPACING)
+            val firstItem = pageSize() * pageNumber;
+            var currentOffset = 0;
+            while (firstItem + currentOffset < validMaps.size && currentOffset < mapsHorizontally * mapsVertically) {
+                val thisX = firstX + (currentOffset % mapsHorizontally) * (MAP_SIZE + MAP_SPACING)
+                val thisY = firstY + (currentOffset / mapsHorizontally) * (MAP_SIZE + MAP_SPACING)
 
-            val mapButton = MapWidget(thisX, thisY, MAP_SIZE, MAP_SIZE, validMaps[firstItem + currentOffset], iomClient)
-            addDrawableChild(mapButton)
-            shownMapButtons.add(mapButton)
+                val mapButton = MapWidget(thisX, thisY, MAP_SIZE, MAP_SIZE, validMaps[firstItem + currentOffset], iomClient)
+                addDrawableChild(mapButton)
+                shownMapButtons.add(mapButton)
 
-            currentOffset++
+                currentOffset++
+            }
         }
     }
 
@@ -285,15 +287,21 @@ class IOMScreen(private val client: MinecraftClient, private val iomClient: IOMC
 
     override fun filesDragged(paths: MutableList<Path>?) {
         super.filesDragged(paths)
+        if (paths.isNullOrEmpty()) return;
+
         for (map in shownMapButtons) {
             if (map.isHovered) {
+                client?.setScreen(ConfirmScreen({ ok ->
+                    client?.setScreen(this)
+                    if (!ok) return@ConfirmScreen
+
+                    iomClient.replaceMap(map.map, paths[0].toFile())
+                }, Text.translatable("iomwiz.replace.title"), Text.translatable("iomwiz.replace.message", map.map.name)))
                 return
             }
         }
 
-        if (paths != null) {
-            processUpload(paths, catgList.selectedOrNull?.category ?: "")
-        }
+        processUpload(paths, catgList.selectedOrNull?.category ?: "")
     }
 
     fun openInBrowser(button: ButtonWidget) {
